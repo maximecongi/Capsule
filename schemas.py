@@ -31,16 +31,16 @@ class Token(BaseModel):
 # Message
 # ---------------------------
 class MessageBase(BaseModel):
-    pass 
+    id: int
+    user_id: int
+    url: str
+    time: datetime
 
 class MessageCreate(MessageBase):
     pass 
 
 class MessageOut(MessageBase):
-    id: int
-    user_id: int
-    url: str
-    time: datetime
+    pass
 
     class Config:
         from_attributes = True

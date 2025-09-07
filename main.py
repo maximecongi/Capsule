@@ -1,12 +1,13 @@
-import os, uuid, shutil
+import os
 from datetime import datetime
 from fastapi import FastAPI, Depends, Form, HTTPException, UploadFile, BackgroundTasks
 from sqlalchemy.orm import Session
 from database import Base, engine, get_db
 from models import User, Capsule, Message
-from schemas import UserCreate, UserOut, Token, CapsuleOut, CapsuleCreate, MessageOut
+from schemas import UserCreate, UserOut, Token, CapsuleOut, CapsuleCreate, MessageCreate, MessageOut
 from auth import hash_password, verify_password, create_access_token, get_current_user
 from notification import send_sms, send_email
+from utils import delete_file, upload_file
 
 # ---------------------------
 # Config
@@ -16,18 +17,17 @@ DEV_MODE = True
 app = FastAPI(title="Capsule API")
 Base.metadata.create_all(bind=engine)
 
-UPLOAD_DIR = "uploads"
-os.makedirs(UPLOAD_DIR, exist_ok=True)
+os.makedirs(os.getenv("UPLOAD_DIR"), exist_ok=True)
 
 # ---------------------------
-# Auth
+# Auth 
 # ---------------------------
 @app.post("/register", response_model=UserOut)
 def register(user: UserCreate, db: Session = Depends(get_db)):
     existing = db.query(User).filter((User.phone == user.phone) | (User.email == user.email)).first()
     if existing:
         raise HTTPException(status_code=400, detail="Téléphone ou email déjà utilisé")
-
+    
     hashed = hash_password(user.password)
     db_user = User(
         firstname=user.firstname,
@@ -187,16 +187,13 @@ def delete_capsule(capsule_id: int, db: Session = Depends(get_db), current_user:
 # ---------------------------
 # Messages
 # ---------------------------
-@app.post("/capsules/{capsule_id}/messages/", response_model=MessageOut)
+@app.post("/capsules/{capsule_id}/messages/", response_model=MessageCreate)
 def create_message(capsule_id: int, file: UploadFile, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     capsule = db.query(Capsule).filter(Capsule.id == capsule_id).first()
     if not capsule:
         raise HTTPException(status_code=404, detail="Capsule non trouvée")
 
-    filename = f"{uuid.uuid4().hex}_{file.filename}"
-    filepath = os.path.join(UPLOAD_DIR, filename)
-    with open(filepath, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
+    filepath = upload_file(file, os.getenv("UPLOAD_DIR"))
 
     msg = Message(
         filename=filepath,
@@ -218,7 +215,7 @@ def get_message(capsule_id: int, message_id: int, db: Session = Depends(get_db),
         raise HTTPException(status_code=403, detail="Non autorisé à voir ce message")
     return MessageOut(id=msg.id, user_id=msg.creator_id, url=msg.filename, time=msg.created_at)
 
-@app.put("/capsules/{capsule_id}/messages/{message_id}", response_model=MessageOut)
+@app.put("/capsules/{capsule_id}/messages/{message_id}", response_model=MessageCreate)
 def update_message(capsule_id: int, message_id: int, file: UploadFile, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     msg = db.query(Message).filter(Message.id == message_id, Message.capsule_id == capsule_id).first()
     if not msg:
@@ -226,15 +223,10 @@ def update_message(capsule_id: int, message_id: int, file: UploadFile, db: Sessi
     if msg.creator_id != current_user.id:
         raise HTTPException(status_code=403, detail="Non autorisé à modifier ce message")
 
-    # Supprimer l'ancien fichier
-    if os.path.exists(msg.filename):
-        os.remove(msg.filename)
+    delete_file(msg.filename)
 
-    filename = f"{uuid.uuid4().hex}_{file.filename}"
-    filepath = os.path.join(UPLOAD_DIR, filename)
-    with open(filepath, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
-    msg.filename = filepath
+    os.getenv("UPLOAD_DIR")
+    filepath = upload_file(file, os.getenv("UPLOAD_DIR"))
 
     db.commit()
     db.refresh(msg)
@@ -248,8 +240,7 @@ def delete_message(capsule_id: int, message_id: int, db: Session = Depends(get_d
     if msg.creator_id != current_user.id and msg.capsule.owner_id != current_user.id:
         raise HTTPException(status_code=403, detail="Non autorisé")
 
-    if os.path.exists(msg.filename):
-        os.remove(msg.filename)
+    delete_file(msg.filename)
 
     db.delete(msg)
     db.commit()
