@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Capsules Temporelles</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.js"></script>
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+        
+        .glass {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+        
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #8b5cf6 0%, #a855f7 100%);
+            transition: all 0.2s ease;
+        }
+        
+        .btn-primary:hover {
+            transform: scale(1.02);
+            box-shadow: 0 10px 20px -5px rgba(139, 92, 246, 0.3);
+        }
+        
+        .animate-fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+        }
+        
+        .notification.show {
+            transform: translateX(0);
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <!-- Notifications -->
+        <div id="notification" class="notification"></div>
+        
+        <!-- Auth Forms -->
+        <div id="auth-section" class="min-h-screen flex items-center justify-center p-4">
+            <div class="glass rounded-2xl p-8 w-full max-w-md">
+                <!-- Login Form -->
+                <div id="login-form" class="animate-fade-in">
+                    <div class="text-center mb-8">
+                        <h1 class="text-3xl font-bold text-white mb-2">🕰️ Capsules</h1>
+                        <p class="text-gray-200">Vos souvenirs dans le futur</p>
+                    </div>
+                    
+                    <form id="login-form-element" class="space-y-6">
+                        <div>
+                            <label class="block text-gray-200 text-sm font-medium mb-2">Téléphone</label>
+                            <input type="tel" id="login-phone" class="w-full px-4 py-3 rounded-lg bg-white/10 border border-white/20 text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500" placeholder="+33 6 12 34 56 78" required>
+                        </div>
+                        <div>
+                            <label class="block text-gray-200 text-sm font-medium mb-2">Mot de passe</label>
+                            <input type="password" id="login-password" class="w-full px-4 py-3 rounded-lg bg-white/10 border border-white/20 text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500" placeholder="••••••••" required>
+                        </div>
+                        <button type="submit" class="w-full btn-primary text-white font-semibold py-3 px-4 rounded-lg">
+                            Se connecter
+                        </button>
+                    </form>
+                    
+                    <div class="mt-6 text-center">
+                        <button id="show-register" class="text-purple-200 hover:text-white transition-colors">
+                            Pas encore de compte ? S'inscrire
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Register Form -->
+                <div id="register-form" class="hidden animate-fade-in">
+                    <div class="text-center mb-8">
+                        <h1 class="text-3xl font-bold text-white mb-2">📝 Inscription</h1>
+                        <p class="text-gray-200">Créez votre compte</p>
+                    </div>
+                    
+                    <form id="register-form-element" class="space-y-4">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-gray-200 text-sm font-medium mb-2">Prénom</label>
+                                <input type="text" id="register-firstname" class="w-full px-4 py-3 rounded-lg bg-white/10 border border-white/20 text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500" placeholder="Jean" required>
+                            </div>
+                            <div>
+                                <label class="block text-gray-200 text-sm font-medium mb-2">Nom</label>
+                                <input type="text" id="register-lastname" class="w-full px-4 py-3 rounded-lg bg-white/10 border border-white/20 text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500" placeholder="Dupont" required>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-gray-200 text-sm font-medium mb-2">Téléphone</label>
+                            <input type="tel" id="register-phone" class="w-full px-4 py-3 rounded-lg bg-white/10 border border-white/20 text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500" placeholder="+33 6 12 34 56 78" required>
+                        </div>
+                        <div>
+                            <label class="block text-gray-200 text-sm font-medium mb-2">Email</label>
+                            <input type="email" id="register-email" class="w-full px-4 py-3 rounded-lg bg-white/10 border border-white/20 text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500" placeholder="jean@email.com" required>
+                        </div>
+                        <div>
+                            <label class="block text-gray-200 text-sm font-medium mb-2">Mot de passe</label>
+                            <input type="password" id="register-password" class="w-full px-4 py-3 rounded-lg bg-white/10 border border-white/20 text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500" placeholder="••••••••" required>
+                        </div>
+                        <button type="submit" class="w-full btn-primary text-white font-semibold py-3 px-4 rounded-lg">
+                            S'inscrire
+                        </button>
+                    </form>
+                    
+                    <div class="mt-6 text-center">
+                        <button id="show-login" class="text-purple-200 hover:text-white transition-colors">
+                            Déjà un compte ? Se connecter
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Main App -->
+        <div id="main-app" class="hidden min-h-screen p-4">
+            <!-- Header -->
+            <header class="glass rounded-2xl p-4 mb-6">
+                <div class="flex justify-between items-center">
+                    <div class="flex items-center space-x-4">
+                        <h1 class="text-2xl font-bold text-white">🕰️ Mes Capsules</h1>
+                        <span id="user-info" class="text-gray-200"></span>
+                    </div>
+                    <div class="flex space-x-3">
+                        <button id="create-capsule-btn" class="btn-primary text-white px-6 py-2 rounded-lg font-medium">
+                            ➕ Nouvelle capsule
+                        </button>
+                        <button id="logout-btn" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg font-medium transition-colors">
+                            Déconnexion
+                        </button>
+                    </div>
+                </div>
+            </header>
+            
+            <!-- Capsules Grid -->
+            <div id="capsules-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Capsules will be loaded here -->
+            </div>
+        </div>
+        
+        <!-- Create/Edit Capsule Modal -->
+        <div id="capsule-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
+            <div class="glass rounded-2xl p-8 w-full max-w-md">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 id="modal-title" class="text-2xl font-bold text-white">Nouvelle capsule</h2>
+                    <button id="close-modal" class="text-gray-400 hover:text-white text-2xl">✕</button>
+                </div>
+                
+                <form id="capsule-form" class="space-y-4">
+                    <div>
+                        <label class="block text-gray-200 text-sm font-medium mb-2">Nom de la capsule</label>
+                        <input type="text" id="capsule-name" class="w-full px-4 py-3 rounded-lg bg-white/10 border border-white/20 text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500" placeholder="Ma capsule du futur" required>
+                    </div>
+                    <div>
+                        <label class="block text-gray-200 text-sm font-medium mb-2">Date de révélation</label>
+                        <input type="datetime-local" id="capsule-reveal-date" class="w-full px-4 py-3 rounded-lg bg-white/10 border border-white/20 text-white focus:outline-none focus:ring-2 focus:ring-purple-500" required>
+                    </div>
+                    <div>
+                        <label class="block text-gray-200 text-sm font-medium mb-2">Destinataire (téléphone)</label>
+                        <input type="tel" id="capsule-recipient" class="w-full px-4 py-3 rounded-lg bg-white/10 border border-white/20 text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500" placeholder="+33 6 12 34 56 78" required>
+                    </div>
+                    <div class="flex items-center space-x-3">
+                        <input type="checkbox" id="capsule-notify" class="w-4 h-4 text-purple-600 rounded focus:ring-2 focus:ring-purple-500">
+                        <label class="text-gray-200 text-sm">Notifier immédiatement le destinataire</label>
+                    </div>
+                    <div class="flex space-x-3 pt-4">
+                        <button type="submit" class="flex-1 btn-primary text-white font-semibold py-3 px-4 rounded-lg">
+                            Créer la capsule
+                        </button>
+                        <button type="button" id="cancel-modal" class="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors">
+                            Annuler
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- View Capsule Modal -->
+        <div id="view-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
+            <div class="glass rounded-2xl p-8 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 id="view-modal-title" class="text-2xl font-bold text-white"></h2>
+                    <button id="close-view-modal" class="text-gray-400 hover:text-white text-2xl">✕</button>
+                </div>
+                
+                <div id="view-modal-content">
+                    <!-- Content will be loaded here -->
+                </div>
+                
+                <div class="mt-6">
+                    <input type="file" id="message-file" class="hidden" multiple accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.txt">
+                    <button id="add-message-btn" class="btn-primary text-white px-6 py-2 rounded-lg font-medium">
+                        📎 Ajouter un fichier
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class CapsuleApp {
+            constructor() {
+                this.baseURL = 'http://127.0.0.1:8000/'; // Remplacez par votre URL d'API
+                this.token = localStorage.getItem('token');
+                this.currentUser = null;
+                this.capsules = [];
+                this.init();
+            }
+            
+            init() {
+                this.bindEvents();
+                if (this.token) {
+                    this.loadUser();
+                } else {
+                    this.showAuth();
+                }
+            }
+            
+            bindEvents() {
+                // Auth events
+                document.getElementById('login-form-element').addEventListener('submit', (e) => this.login(e));
+                document.getElementById('register-form-element').addEventListener('submit', (e) => this.register(e));
+                document.getElementById('show-register').addEventListener('click', () => this.showRegister());
+                document.getElementById('show-login').addEventListener('click', () => this.showLogin());
+                document.getElementById('logout-btn').addEventListener('click', () => this.logout());
+                
+                // Modal events
+                document.getElementById('create-capsule-btn').addEventListener('click', () => this.showCreateModal());
+                document.getElementById('close-modal').addEventListener('click', () => this.hideModal());
+                document.getElementById('cancel-modal').addEventListener('click', () => this.hideModal());
+                document.getElementById('capsule-form').addEventListener('submit', (e) => this.createCapsule(e));
+                
+                // View modal events
+                document.getElementById('close-view-modal').addEventListener('click', () => this.hideViewModal());
+                document.getElementById('add-message-btn').addEventListener('click', () => document.getElementById('message-file').click());
+                document.getElementById('message-file').addEventListener('change', (e) => this.uploadFiles(e));
+            }
+            
+            async login(e) {
+                e.preventDefault();
+                const phone = document.getElementById('login-phone').value;
+                const password = document.getElementById('login-password').value;
+                
+                try {
+                    const formData = new FormData();
+                    formData.append('phone', phone);
+                    formData.append('password', password);
+                    
+                    const response = await fetch(`${this.baseURL}/login`, {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        this.token = data.access_token;
+                        localStorage.setItem('token', this.token);
+                        this.loadUser();
+                        this.showNotification('Connexion réussie !', 'success');
+                    } else {
+                        this.showNotification('Erreur de connexion', 'error');
+                    }
+                } catch (error) {
+                    this.showNotification('Erreur réseau', 'error');
+                }
+            }
+            
+            async register(e) {
+                e.preventDefault();
+                const userData = {
+                    firstname: document.getElementById('register-firstname').value,
+                    lastname: document.getElementById('register-lastname').value,
+                    phone: document.getElementById('register-phone').value,
+                    email: document.getElementById('register-email').value,
+                    password: document.getElementById('register-password').value
+                };
+                
+                try {
+                    const response = await fetch(`${this.baseURL}/register`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(userData)
+                    });
+                    
+                    if (response.ok) {
+                        this.showNotification('Inscription réussie ! Connectez-vous.', 'success');
+                        this.showLogin();
+                    } else {
+                        this.showNotification('Erreur d\'inscription', 'error');
+                    }
+                } catch (error) {
+                    this.showNotification('Erreur réseau', 'error');
+                }
+            }
+            
+            async loadUser() {
+                try {
+                    const response = await this.apiCall('/me');
+                    if (response.ok) {
+                        this.currentUser = await response.json();
+                        this.showApp();
+                        this.loadCapsules();
+                    } else {
+                        this.logout();
+                    }
+                } catch (error) {
+                    this.logout();
+                }
+            }
+            
+            async loadCapsules() {
+                // Note: Votre API n'a pas d'endpoint pour lister toutes les capsules
+                // Vous devriez l'ajouter dans votre backend
+                document.getElementById('user-info').textContent = 
+                    `${this.currentUser.firstname} ${this.currentUser.lastname}`;
+                
+                // Simuler des capsules pour la démo
+                this.renderCapsules([]);
+            }
+            
+            async createCapsule(e) {
+                e.preventDefault();
+                const capsuleData = {
+                    name: document.getElementById('capsule-name').value,
+                    reveal_date: document.getElementById('capsule-reveal-date').value,
+                    recipient_phone: document.getElementById('capsule-recipient').value,
+                    notify_on_create: document.getElementById('capsule-notify').checked
+                };
+                
+                try {
+                    const response = await this.apiCall('/capsules/', {
+                        method: 'POST',
+                        body: JSON.stringify(capsuleData)
+                    });
+                    
+                    if (response.ok) {
+                        this.showNotification('Capsule créée avec succès !', 'success');
+                        this.hideModal();
+                        this.loadCapsules();
+                    } else {
+                        this.showNotification('Erreur lors de la création', 'error');
+                    }
+                } catch (error) {
+                    this.showNotification('Erreur réseau', 'error');
+                }
+            }
+            
+            renderCapsules(capsules) {
+                const container = document.getElementById('capsules-container');
+                
+                if (capsules.length === 0) {
+                    container.innerHTML = `
+                        <div class="col-span-full text-center py-12">
+                            <div class="glass rounded-2xl p-8">
+                                <div class="text-6xl mb-4">📦</div>
+                                <h3 class="text-xl font-bold text-white mb-2">Aucune capsule</h3>
+                                <p class="text-gray-300 mb-4">Créez votre première capsule temporelle</p>
+                                <button class="btn-primary text-white px-6 py-2 rounded-lg font-medium" onclick="document.getElementById('create-capsule-btn').click()">
+                                    Commencer
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                container.innerHTML = capsules.map(capsule => `
+                    <div class="glass rounded-2xl p-6 card-hover cursor-pointer" onclick="app.viewCapsule(${capsule.id})">
+                        <div class="flex justify-between items-start mb-4">
+                            <h3 class="text-lg font-bold text-white">${capsule.name}</h3>
+                            <span class="text-2xl">${this.getCapsuleEmoji(capsule)}</span>
+                        </div>
+                        <div class="space-y-2 text-gray-300 text-sm">
+                            <p>📅 Révélation: ${new Date(capsule.reveal_date).toLocaleDateString('fr-FR')}</p>
+                            <p>📱 Destinataire: ${capsule.recipient_phone}</p>
+                            <p>📎 ${capsule.messages?.length || 0} message(s)</p>
+                        </div>
+                        <div class="mt-4 pt-4 border-t border-white/10">
+                            <span class="text-xs text-gray-400">
+                                ${this.isRevealed(capsule) ? '🔓 Révélée' : '🔒 En attente'}
+                            </span>
+                        </div>
+                    </div>
+                `).join('');
+            }
+            
+            getCapsuleEmoji(capsule) {
+                if (this.isRevealed(capsule)) return '🎁';
+                return '📦';
+            }
+            
+            isRevealed(capsule) {
+                return new Date(capsule.reveal_date) <= new Date();
+            }
+            
+            async viewCapsule(capsuleId) {
+                // Implémentation pour voir une capsule
+                this.showViewModal(`Capsule #${capsuleId}`, 'Chargement...');
+            }
+            
+            async uploadFiles(e) {
+                const files = e.target.files;
+                if (!files.length) return;
+                
+                // Implémentation de l'upload des fichiers
+                this.showNotification(`${files.length} fichier(s) ajouté(s)`, 'success');
+            }
+            
+            showAuth() {
+                document.getElementById('auth-section').classList.remove('hidden');
+                document.getElementById('main-app').classList.add('hidden');
+            }
+            
+            showApp() {
+                document.getElementById('auth-section').classList.add('hidden');
+                document.getElementById('main-app').classList.remove('hidden');
+            }
+            
+            showLogin() {
+                document.getElementById('login-form').classList.remove('hidden');
+                document.getElementById('register-form').classList.add('hidden');
+            }
+            
+            showRegister() {
+                document.getElementById('login-form').classList.add('hidden');
+                document.getElementById('register-form').classList.remove('hidden');
+            }
+            
+            showCreateModal() {
+                document.getElementById('capsule-modal').classList.remove('hidden');
+                document.getElementById('capsule-modal').classList.add('flex');
+                // Set minimum date to today
+                const now = new Date();
+                now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+                document.getElementById('capsule-reveal-date').min = now.toISOString().slice(0, 16);
+            }
+            
+            hideModal() {
+                document.getElementById('capsule-modal').classList.add('hidden');
+                document.getElementById('capsule-modal').classList.remove('flex');
+                document.getElementById('capsule-form').reset();
+            }
+            
+            showViewModal(title, content) {
+                document.getElementById('view-modal-title').textContent = title;
+                document.getElementById('view-modal-content').innerHTML = content;
+                document.getElementById('view-modal').classList.remove('hidden');
+                document.getElementById('view-modal').classList.add('flex');
+            }
+            
+            hideViewModal() {
+                document.getElementById('view-modal').classList.add('hidden');
+                document.getElementById('view-modal').classList.remove('flex');
+            }
+            
+            logout() {
+                localStorage.removeItem('token');
+                this.token = null;
+                this.currentUser = null;
+                this.showAuth();
+                this.showNotification('Déconnecté', 'info');
+            }
+            
+            async apiCall(endpoint, options = {}) {
+                const defaultOptions = {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...(this.token && { 'Authorization': `Bearer ${this.token}` })
+                    }
+                };
+                
+                return fetch(this.baseURL + endpoint, {
+                    ...defaultOptions,
+                    ...options,
+                    headers: { ...defaultOptions.headers, ...options.headers }
+                });
+            }
+            
+            showNotification(message, type = 'info') {
+                const notification = document.getElementById('notification');
+                const colors = {
+                    success: 'bg-green-500',
+                    error: 'bg-red-500',
+                    info: 'bg-blue-500'
+                };
+                
+                notification.innerHTML = `
+                    <div class="${colors[type]} text-white px-6 py-3 rounded-lg shadow-lg">
+                        ${message}
+                    </div>
+                `;
+                
+                notification.classList.add('show');
+                
+                setTimeout(() => {
+                    notification.classList.remove('show');
+                }, 3000);
+            }
+        }
+        
+        // Initialize app
+        const app = new CapsuleApp();
+    </script>
+</body>
+</html>
